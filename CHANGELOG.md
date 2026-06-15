@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- Data-export stream now surfaces archive-level errors (gzip/finalize) on the response stream
+  instead of an unhandled rejection or a silently truncated download. (#248)
+
 ## [0.2.3] - 2026-06-15
 
 A patch release: the dashboard now works when served over plain HTTP on a non-`localhost`
