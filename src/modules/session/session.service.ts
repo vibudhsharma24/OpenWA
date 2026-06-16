@@ -805,6 +805,17 @@ export class SessionService implements OnModuleDestroy, OnModuleInit, OnApplicat
     return engine.sendSeen(chatId);
   }
 
+  async deleteChat(id: string, chatId: string): Promise<boolean> {
+    await this.findOne(id); // Verify session exists
+    const engine = this.engines.get(id);
+
+    if (!engine) {
+      throw new BadRequestException('Session is not started');
+    }
+
+    return engine.deleteChat(chatId);
+  }
+
   async sendChatState(id: string, chatId: string, state: ChatState): Promise<void> {
     await this.findOne(id); // Verify session exists
     const engine = this.engines.get(id);
