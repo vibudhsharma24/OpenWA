@@ -18,8 +18,8 @@ import {
   PluginLogger,
 } from './plugin.interfaces';
 import { PluginStorageService } from './plugin-storage.service';
-import { MessageService } from '../../modules/message/message.service';
-import { SessionService } from '../../modules/session/session.service';
+import type { MessageService } from '../../modules/message/message.service';
+import type { SessionService } from '../../modules/session/session.service';
 import type { IWhatsAppEngine } from '../../engine/interfaces/whatsapp-engine.interface';
 
 /**
@@ -285,6 +285,26 @@ export class PluginLoaderService implements OnModuleInit {
   }
 
   /**
+   * Resolve MessageService at call time via a lazy require so plugin-loader creates NO top-level
+   * module-load edge to message.service. A static import closes the cycle
+   * plugin-loader -> message -> session -> engine.factory -> core/plugins barrel -> plugin-loader,
+   * which corrupts MessageService's constructor paramtype metadata (SessionService -> undefined) at boot.
+   */
+  private getMessageService(): MessageService {
+    const mod =
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      require('../../modules/message/message.service') as typeof import('../../modules/message/message.service');
+    return this.moduleRef.get(mod.MessageService, { strict: false });
+  }
+
+  private getSessionService(): SessionService {
+    const mod =
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      require('../../modules/session/session.service') as typeof import('../../modules/session/session.service');
+    return this.moduleRef.get(mod.SessionService, { strict: false });
+  }
+
+  /**
    * Enforce a plugin's manifest session scope. Runs BEFORE any engine/message resolution —
    * sessionId is supplied by the plugin, so this is the security boundary. Absent = ['*'].
    */
@@ -302,7 +322,7 @@ export class PluginLoaderService implements OnModuleInit {
    */
   private resolveEngine(manifest: PluginManifest, sessionId: string): IWhatsAppEngine {
     this.assertSessionAllowed(manifest, sessionId);
-    const engine = this.moduleRef.get(SessionService, { strict: false }).getEngine(sessionId);
+    const engine = this.getSessionService().getEngine(sessionId);
     if (!engine) {
       throw new PluginCapabilityError(`Session ${sessionId} has no active engine (unknown or not started)`);
     }
@@ -338,13 +358,11 @@ export class PluginLoaderService implements OnModuleInit {
       messages: {
         sendText: async (sessionId, chatId, text) => {
           this.assertSessionAllowed(plugin.manifest, sessionId);
-          return this.moduleRef.get(MessageService, { strict: false }).sendText(sessionId, { chatId, text });
+          return this.getMessageService().sendText(sessionId, { chatId, text });
         },
         reply: async (sessionId, chatId, quotedMessageId, text) => {
           this.assertSessionAllowed(plugin.manifest, sessionId);
-          return this.moduleRef
-            .get(MessageService, { strict: false })
-            .reply(sessionId, { chatId, quotedMessageId, text });
+          return this.getMessageService().reply(sessionId, { chatId, quotedMessageId, text });
         },
       } satisfies PluginMessagingCapability,
       engine: {
