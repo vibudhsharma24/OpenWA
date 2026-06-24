@@ -1,5 +1,5 @@
 {
-    "name": "@openwa/sdk",
+    "name": "@openwa/client",
     "version": "0.1.0",
     "description": "Official JavaScript/TypeScript SDK for OpenWA WhatsApp API Gateway",
     "type": "module",

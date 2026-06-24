@@ -5,7 +5,7 @@
  *
  * @example
  * ```typescript
- * import { OpenWAClient, OpenWAApiError } from '@openwa/sdk';
+ * import { OpenWAClient, OpenWAApiError } from '@openwa/client';
  *
  * const client = new OpenWAClient({
  *   baseUrl: 'http://localhost:2785',
